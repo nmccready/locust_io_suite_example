@@ -1,0 +1,5 @@
+#!/bin/bash
+
+ #echo "fs.file-max = 65535" >> /etc/sysctl.conf
+ #echo "*       soft    nofile  65535" >> /etc/security/limits.conf
+ #echo "*       hard    nofile  65535" >> /etc/security/limits.conf

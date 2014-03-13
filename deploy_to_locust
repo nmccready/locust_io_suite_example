@@ -1,0 +1,26 @@
+#!/bin/bash
+
+RUN_AS=${1:-$(whoami)}
+MY_PATH=`dirname "$0"`
+
+echo Process will run as "$RUN_AS"
+echo
+
+for i in $(echo {1,2,3,8,9})
+do
+ 
+  ssh -i ~/.ssh/id_rsa -t $RUN_AS@testbox$i..com 'sudo mkdir -p /opt/swarm/www/utils && sudo chmod 777 -R /opt/swarm/www  && rm -f /opt/swarm/www/* && rm -f /opt/swarm/www/utils/*'
+  echo "$MY_PATH"/python_scripts/
+  for j in $(echo `ls "$MY_PATH"/python_scripts/`)
+  do
+    scp -i ~/.ssh/id_rsa "$MY_PATH"/python_scripts/$j $RUN_AS@testbox$i..com:/opt/swarm/www
+  done 
+
+  for j in $(echo `ls "MY_PATH"\python_scripts/utils`)
+  do
+    scp -i ~/.ssh/id_rsa "$MY_PATH"/python_scripts/utils/$j $RUN_AS@testbox$i..com:/opt/swarm/www/utils
+  done 
+
+  ssh -i ~/.ssh/id_rsa -t $RUN_AS@testbox$i..com 'sudo chmod 755 -R /opt/swarm/www'
+  ssh -i ~/.ssh/id_rsa -t $RUN_AS@testbox$i..com 'sudo chown -R root:root /opt/swarm/www'
+done

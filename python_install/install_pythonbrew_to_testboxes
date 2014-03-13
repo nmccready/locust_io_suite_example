@@ -1,0 +1,55 @@
+#!/bin/bash
+
+RUNAS=${1:-$(whoami)}
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!Process will run as "$RUNAS"!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo
+
+
+for i in $(echo {1,2,3,8,9})
+do
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!Starting Install on testbox"$i"..com as "$RUNAS"!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com 'sudo yum install patch'
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo curl -kLO http://xrl.us/pythonbrewinstall'
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo chmod +x pythonbrewinstall'
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo ./pythonbrewinstall'
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo mkdir /usr/local/oldPython'
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo mv /usr/local/bin/* /usr/local/oldPython'
+
+#begin patch bug in pythonbrew https://github.com/utahta/pythonbrew/issues/108#ref-commit-fd142e4
+scp ./bashrc "$RUNAS"@testbox"$i"..com:~/
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo chown root:root bashrc'
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo chmod 644 bashrc'
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo mv bashrc /usr/local/pythonbrew/etc'
+#end patch
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!Running sudopybrew!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo 
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudopybrew install 2.7.3'
+
+echo symlinking pythonbrew pythons 2.7.3 to /usr/local/bin
+echo
+
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo ln -s /usr/local/pythonbrew/pythons/Python-2.7.3/bin/* /usr/local/bin'
+
+echo installing locustio
+echo
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo /usr/local/pythonbrew/pythons/Python-2.7.3/bin/pip install locustio'
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!symlinking locsutio to /usr/local/bin!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo ln -s /usr/local/pythonbrew/pythons/Python-2.7.3/bin/locust /usr/local/bin/locust'
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!installing simplejson!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo
+ssh -i ~/.ssh/id_rsa -t "$RUNAS"@testbox"$i"..com  'sudo /usr/local/pythonbrew/pythons/Python-2.7.3/bin/pip install simplejson'
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!DONE INSTALL!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+done
